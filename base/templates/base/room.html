@@ -1,5 +1,15 @@
 {% extends 'base/main.html' %}
 
 {% block content %}
-<h2>this is a room</h2>
+<main>
+    <section id="room-name-wrapper">
+        <p>Room Name: <span id="room-name"></span></p>
+    </section>
+    <section id="video-streams">
+        <div class="video-container" id="user-container-1">
+            <div class="username-wrapper"><span class="user-name">My Name</span></div>
+            <div class="video-player" id="user-1"></div>
+        </div>
+    </section>
+</main>
 {% endblock content %}
