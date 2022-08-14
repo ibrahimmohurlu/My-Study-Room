@@ -45,3 +45,8 @@ body {
     background-color: rgba(198, 202, 219, 1);
     position: relative;
 }
+
+.video-player{
+    height: 100%;
+    width: 100%;
+}

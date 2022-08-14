@@ -9,7 +9,20 @@
             <h1>Welcome to My Study Room</h1>
             <p>A video calling application to study with your friends while applying pomodoro technique.</p>
         </div>
+        <form id="form">
+            <div class="form-field">
+                <input type="submit" value="Join Stream" />
+            </div>
+        </form>
     </section>
 
 </main>
+<script>
+    let form = document.getElementById('form')
+    let handleSubmit = async (e) => {
+        e.preventDefault()
+        window.open('/room/', '_self')
+    }
+    form.addEventListener('submit', handleSubmit)
+</script>
 {% endblock content %}
