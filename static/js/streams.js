@@ -2,7 +2,8 @@ const APP_ID = 'eb3e875e3cec4057b70bd1e07645b3c0'
 const CHANNEL = sessionStorage.getItem('roomName')
 const TOKEN = sessionStorage.getItem('token')
 let UID = Number(sessionStorage.getItem('UID'))
-let NAME =sessionStorage.getItem('userName')
+let NAME = sessionStorage.getItem('userName')
+
 const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
 
 let localTracks = []
@@ -10,7 +11,6 @@ let remoteUsers = {}
 
 let joinAndDisplayLocalStream = async () => {
     document.getElementById('room-name').innerText = CHANNEL
-    console.log(CHANNEL)
     client.on('user-published', handleUserJoined)
     client.on('user-left', handleUserLeft)
     try {
@@ -22,14 +22,16 @@ let joinAndDisplayLocalStream = async () => {
 
     //index 0 audio index 1 is video
     localTracks = await AgoraRTC.createMicrophoneAndCameraTracks()
+    let member = await createMember()
 
     let player = `
     <div class="video-container" id="user-container-${UID}">
-        <div class="username-wrapper"><span class="user-name">My Name</span></div>
+        <div class="username-wrapper" id="username-wrapper-${UID}"><span id="user-name">${member.name}</span></div>
              <div class="video-player" id="user-${UID}"></div>
         </div>
                 `
     document.getElementById('video-streams').insertAdjacentHTML('beforeend', player)
+    document.getElementById(`username-wrapper-${UID}`).style.backgroundColor="rgba(52, 171, 58, 0.88)"
     localTracks[1].play(`user-${UID}`)
     await client.publish([localTracks[0], localTracks[1]])
 }
@@ -44,9 +46,11 @@ let handleUserJoined = async (user, mediaType) => {
             player.remove()
         }
 
+        let member = await getMember(user)
+
         player = `
         <div class="video-container" id="user-container-${user.uid}">
-            <div class="username-wrapper"><span class="user-name">My Name</span></div>
+            <div class="username-wrapper"><span class="user-name">${member.name}</span></div>
                 <div class="video-player" id="user-${user.uid}"></div>
             </div>
                 `
@@ -70,6 +74,8 @@ let leaveAndRemoveLocalStream = async () => {
     }
 
     await client.leave()
+
+    deleteMember()
     window.open('/', '_self')
 }
 
@@ -92,8 +98,40 @@ let toggleMicrophone = async (e) => {
         e.target.style.backgroundColor = 'rgba(255, 80, 80, 1)'
     }
 }
+let createMember = async () => {
+    let response = await fetch('/create_member/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 'name': NAME, 'room_name': CHANNEL, 'UID': UID })
+    })
+    let member = await response.json()
+    return member
+}
+
+
+let getMember = async (user) => {
+    let response = fetch(`/get_member/?UID=${user.uid}&room_name=${CHANNEL}`)
+    let member = await (await response).json()
+    return member
+}
+
+let deleteMember = async () => {
+    let response = await fetch('/delete_member/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 'name': NAME, 'room_name': CHANNEL, 'UID': UID })
+    })
+    let member = await response.json()
+}
 
 joinAndDisplayLocalStream()
+
+
+window.addEventListener('beforeunload', deleteMember)
 
 document.getElementById('leave-btn').addEventListener('click', leaveAndRemoveLocalStream)
 
