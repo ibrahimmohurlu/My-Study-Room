@@ -5,13 +5,16 @@
 <main>
     <section id="form-container">
         <img id="logo" src="{% static 'images/mystudyroom-icon.svg' %}" alt="" />
-        <div>
+        <div id="welcome-message">
             <h1>Welcome to My Study Room</h1>
             <p>A video calling application to study with your friends while applying pomodoro technique.</p>
         </div>
         <form id="form">
             <div class="form-field">
                 <input type="text" name="room" placeholder="Enter a room name..." style="text-transform:uppercase;" />
+            </div>
+            <div class="form-field">
+                <input type="text" name="name" placeholder="Enter your name..." />
             </div>
 
             <div class="form-field">
@@ -26,6 +29,7 @@
     let handleSubmit = async (e) => {
         e.preventDefault()
         let roomName = e.target.room.value.toUpperCase()
+        let name = e.target.name.value
         let response = await fetch(`/get_token/?channel=${roomName}`)
         let data = await response.json()
         let UID = data.uid
@@ -33,7 +37,8 @@
         sessionStorage.setItem('UID', UID)
         sessionStorage.setItem('token', token)
         sessionStorage.setItem('roomName', roomName)
-        
+        sessionStorage.setItem('userName', name)
+
         window.open('/room/', '_self')
     }
     form.addEventListener('submit', handleSubmit)
