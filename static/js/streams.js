@@ -1,16 +1,25 @@
 const APP_ID = 'eb3e875e3cec4057b70bd1e07645b3c0'
-const CHANNEL = 'main'
-const TOKEN = '006eb3e875e3cec4057b70bd1e07645b3c0IABfmtpVX7qR9fbINhEjBcNQ9FsSce9cuRhmVAYoMFEItGTNKL8AAAAAEACWH508X3H9YgEAAQBfcf1i'
-let UID
+const CHANNEL = sessionStorage.getItem('roomName')
+const TOKEN = sessionStorage.getItem('token')
+let UID = Number(sessionStorage.getItem('UID'))
+
 const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
 
 let localTracks = []
 let remoteUsers = {}
 
 let joinAndDisplayLocalStream = async () => {
+    document.getElementById('room-name').innerText = CHANNEL
+    console.log(CHANNEL)
     client.on('user-published', handleUserJoined)
     client.on('user-left', handleUserLeft)
-    UID = await client.join(APP_ID, CHANNEL, TOKEN, null)
+    try {
+        await client.join(APP_ID, CHANNEL, TOKEN, UID)
+    } catch (error) {
+        console.error(error)
+        window.open('/', '_self')
+    }
+
     //index 0 audio index 1 is video
     localTracks = await AgoraRTC.createMicrophoneAndCameraTracks()
 
@@ -67,20 +76,20 @@ let leaveAndRemoveLocalStream = async () => {
 let toggleCamera = async (e) => {
     if (localTracks[1].muted) {
         await localTracks[1].setMuted(false)
-        e.target.style.backgroundColor ='#fff'
-    }else{
+        e.target.style.backgroundColor = '#fff'
+    } else {
         await localTracks[1].setMuted(true)
-        e.target.style.backgroundColor ='rgba(255, 80, 80, 1)'
+        e.target.style.backgroundColor = 'rgba(255, 80, 80, 1)'
     }
 }
 
 let toggleMicrophone = async (e) => {
     if (localTracks[0].muted) {
         await localTracks[0].setMuted(false)
-        e.target.style.backgroundColor ='#fff'
-    }else{
+        e.target.style.backgroundColor = '#fff'
+    } else {
         await localTracks[0].setMuted(true)
-        e.target.style.backgroundColor ='rgba(255, 80, 80, 1)'
+        e.target.style.backgroundColor = 'rgba(255, 80, 80, 1)'
     }
 }
 
