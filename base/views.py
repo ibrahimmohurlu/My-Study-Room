@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.core import serializers
 from agora_token_builder import RtcTokenBuilder
 from .models import RoomMember
 from django.views.decorators.csrf import csrf_exempt
@@ -42,7 +43,34 @@ def getMember(request):
         room_name=room_name
     )
     name = member.name
-    return JsonResponse({'name': member.name}, safe=False)
+    uid = member.uid
+    room_name = member.room_name
+    check_status = member.check_status
+    return JsonResponse({'name': name, 'uid': uid, 'room_name': room_name, 'check_status': check_status}, safe=False)
+
+
+def getMembers(request):
+    room_name = request.GET.get('room_name')
+
+    members = RoomMember.objects.filter(room_name=room_name)
+    members_json = list(members.values())
+    return JsonResponse({'members': members_json}, safe=False)
+
+
+def updateMemberStatus(request):
+    uid = request.GET.get('UID')
+    room_name = request.GET.get('room_name')
+    member = RoomMember.objects.get(
+        uid=uid,
+        room_name=room_name
+    )
+    if member.check_status==True:
+        member.check_status=False
+    else:
+        member.check_status=True
+    
+    member.save()
+    return JsonResponse({'name': member.name, 'uid': member.uid, 'room_name': member.room_name, 'check_status': member.check_status}, safe=False)
 
 
 def getToken(request):

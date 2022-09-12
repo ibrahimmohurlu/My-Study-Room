@@ -31,7 +31,7 @@ let joinAndDisplayLocalStream = async () => {
         </div>
                 `
     document.getElementById('video-streams').insertAdjacentHTML('beforeend', player)
-    document.getElementById(`username-wrapper-${UID}`).style.backgroundColor="rgba(52, 171, 58, 0.88)"
+    document.getElementById(`username-wrapper-${UID}`).style.backgroundColor = "rgba(52, 171, 58, 0.88)"
     localTracks[1].play(`user-${UID}`)
     await client.publish([localTracks[0], localTracks[1]])
 }
@@ -60,6 +60,7 @@ let handleUserJoined = async (user, mediaType) => {
     if (mediaType === 'audio') {
         user.audioTrack.play()
     }
+    
 }
 
 let handleUserLeft = async (user) => {
@@ -77,6 +78,18 @@ let leaveAndRemoveLocalStream = async () => {
 
     deleteMember()
     window.open('/', '_self')
+}
+
+let handleUserCheck = async () => {
+    response = fetch(`/update_status/?UID=${UID}&room_name=${CHANNEL}`)
+    member = await (await response).json()
+
+    if(member.check_status===true){
+        document.getElementById('timer-btn').style.backgroundColor='#ff7900'
+    }else{
+        document.getElementById('timer-btn').style.backgroundColor='#fff'
+    }
+
 }
 
 let toggleCamera = async (e) => {
@@ -117,6 +130,12 @@ let getMember = async (user) => {
     return member
 }
 
+let getMembers = async () => {
+    let response = fetch(`/get_members/?room_name=${CHANNEL}`)
+    let members = await (await response).json()
+    return members
+}
+
 let deleteMember = async () => {
     let response = await fetch('/delete_member/', {
         method: 'POST',
@@ -138,3 +157,5 @@ document.getElementById('leave-btn').addEventListener('click', leaveAndRemoveLoc
 document.getElementById('camera-btn').addEventListener('click', toggleCamera)
 
 document.getElementById('mic-btn').addEventListener('click', toggleMicrophone)
+
+document.getElementById('timer-btn').addEventListener('click', handleUserCheck)
