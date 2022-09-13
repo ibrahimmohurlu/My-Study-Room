@@ -6,6 +6,8 @@ let NAME = sessionStorage.getItem('userName')
 
 const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
 
+let sessionInterval
+
 let localTracks = []
 let remoteUsers = {}
 
@@ -60,7 +62,7 @@ let handleUserJoined = async (user, mediaType) => {
     if (mediaType === 'audio') {
         user.audioTrack.play()
     }
-    
+
 }
 
 let handleUserLeft = async (user) => {
@@ -81,16 +83,19 @@ let leaveAndRemoveLocalStream = async () => {
 }
 
 let handleUserCheck = async () => {
-    response = fetch(`/update_status/?UID=${UID}&room_name=${CHANNEL}`)
-    member = await (await response).json()
-
-    if(member.check_status===true){
-        document.getElementById('timer-btn').style.backgroundColor='#ff7900'
-    }else{
-        document.getElementById('timer-btn').style.backgroundColor='#fff'
+    let response = fetch(`/update_status/?UID=${UID}&room_name=${CHANNEL}`)
+    let member = await (await response).json()
+    if (member.check_status === true) {
+        document.getElementById('timer-btn').style.backgroundColor = '#ff7900'
+    } else {
+        document.getElementById('timer-btn').style.backgroundColor = '#fff'
     }
+    sessionInterval = setInterval(checkForSession, 1000)
+
 
 }
+
+
 
 let toggleCamera = async (e) => {
     if (localTracks[1].muted) {
@@ -150,6 +155,25 @@ let deleteMember = async () => {
 joinAndDisplayLocalStream()
 
 
+function startTimer(duration, display) {
+    var timer = duration, minutes, seconds;
+    const interval = setInterval(function () {
+        minutes = parseInt(timer / 60, 10);
+        seconds = parseInt(timer % 60, 10);
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        display.textContent = minutes + ":" + seconds;
+        console.log("interval works")
+        if (--timer < 0) {
+            clearInterval(interval)
+        }
+    }, 1000);
+}
+
+
+
 window.addEventListener('beforeunload', deleteMember)
 
 document.getElementById('leave-btn').addEventListener('click', leaveAndRemoveLocalStream)
@@ -159,3 +183,22 @@ document.getElementById('camera-btn').addEventListener('click', toggleCamera)
 document.getElementById('mic-btn').addEventListener('click', toggleMicrophone)
 
 document.getElementById('timer-btn').addEventListener('click', handleUserCheck)
+
+let checkForSession = async () => {
+    let response = fetch(`/can_session_start/?room_name=${CHANNEL}`)
+    let canSessionStart = await (await response).json()
+    console.log(canSessionStart.can_session_start)
+    if (canSessionStart.can_session_start) {
+        clearInterval(sessionInterval)
+        
+        let timerBtn = document.getElementById('timer-btn')
+        timerBtn.style.backgroundColor = '#42855B'
+        timerBtn.style.cursor = "default"
+        startTimer(10, document.getElementById('timer'))
+        document.getElementById('timer-btn').removeEventListener('click', handleUserCheck)
+    }
+}
+
+
+
+

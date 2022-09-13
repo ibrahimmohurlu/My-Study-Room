@@ -9,5 +9,6 @@ urlpatterns = [
     path('get_member/', views.getMember),
     path('delete_member/', views.deleteMember),
     path('get_members/',views.getMembers),
-    path('update_status/',views.updateMemberStatus)
+    path('update_status/',views.updateMemberStatus),
+    path('can_session_start/',views.canSessionStart)
 ]

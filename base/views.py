@@ -64,13 +64,28 @@ def updateMemberStatus(request):
         uid=uid,
         room_name=room_name
     )
-    if member.check_status==True:
-        member.check_status=False
+    if member.check_status == True:
+        member.check_status = False
     else:
-        member.check_status=True
-    
+        member.check_status = True
+
     member.save()
     return JsonResponse({'name': member.name, 'uid': member.uid, 'room_name': member.room_name, 'check_status': member.check_status}, safe=False)
+
+
+def canSessionStart(request):
+    room_name = request.GET.get('room_name')
+    members = RoomMember.objects.filter(room_name=room_name)
+    can_session_start=False
+    states=[]
+    for member in members:
+        states.append(member.check_status)
+    if states.__contains__(False):
+        can_session_start=False
+    else:
+        can_session_start=True
+    return JsonResponse({'can_session_start': can_session_start}, safe=False)
+        
 
 
 def getToken(request):
