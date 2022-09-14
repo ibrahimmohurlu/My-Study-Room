@@ -5,8 +5,7 @@ let UID = Number(sessionStorage.getItem('UID'))
 let NAME = sessionStorage.getItem('userName')
 
 const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
-
-let sessionInterval
+const studySessionLength = 5
 
 let localTracks = []
 let remoteUsers = {}
@@ -90,9 +89,15 @@ let handleUserCheck = async () => {
     } else {
         document.getElementById('timer-btn').style.backgroundColor = '#fff'
     }
-    sessionInterval = setInterval(checkForSession, 1000)
-
-
+    const sessionInterval = setInterval(async () => {
+        let response = fetch(`/can_session_start/?room_name=${CHANNEL}`)
+        let canSessionStart = await (await response).json()
+        console.log(canSessionStart.can_session_start)
+        if (canSessionStart.can_session_start) {
+            clearInterval(sessionInterval)
+            startStudySession()
+        }
+    }, 1000)
 }
 
 
@@ -110,10 +115,12 @@ let toggleCamera = async (e) => {
 let toggleMicrophone = async (e) => {
     if (localTracks[0].muted) {
         await localTracks[0].setMuted(false)
-        e.target.style.backgroundColor = '#fff'
+        document.getElementById("mic-btn").style.backgroundColor = "#fff"
+        //e.target.style.backgroundColor = '#fff'
     } else {
         await localTracks[0].setMuted(true)
-        e.target.style.backgroundColor = 'rgba(255, 80, 80, 1)'
+        document.getElementById("mic-btn").style.backgroundColor = "rgba(255, 80, 80, 1)"
+        //e.target.style.backgroundColor = 'rgba(255, 80, 80, 1)'
     }
 }
 let createMember = async () => {
@@ -155,7 +162,7 @@ let deleteMember = async () => {
 joinAndDisplayLocalStream()
 
 
-function startTimer(duration, display) {
+async function startTimer(duration, display, type, _callback) {
     var timer = duration, minutes, seconds;
     const interval = setInterval(function () {
         minutes = parseInt(timer / 60, 10);
@@ -164,12 +171,15 @@ function startTimer(duration, display) {
         minutes = minutes < 10 ? "0" + minutes : minutes;
         seconds = seconds < 10 ? "0" + seconds : seconds;
 
-        display.textContent = minutes + ":" + seconds;
+        display.textContent = type + " session ends in " + minutes + ":" + seconds;
         console.log("interval works")
         if (--timer < 0) {
             clearInterval(interval)
+            display.textContent = ""
+            _callback()
         }
     }, 1000);
+    return
 }
 
 
@@ -184,20 +194,47 @@ document.getElementById('mic-btn').addEventListener('click', toggleMicrophone)
 
 document.getElementById('timer-btn').addEventListener('click', handleUserCheck)
 
+let revertSessionChanges = async () => {
+    let response = fetch(`/update_status/?UID=${UID}&room_name=${CHANNEL}`)
+    let member = await (await response).json()
+    console.log("member stauts changed to: " + member.check_status)
+    let timerBtn = document.getElementById('timer-btn')
+    timerBtn.style.backgroundColor = '#fff'
+    timerBtn.style.cursor = "pointer"
+    let micBtn = document.getElementById('mic-btn')
+    micBtn.addEventListener('click', toggleMicrophone)
+    toggleMicrophone()
+    micBtn.style.cursor = "pointer"
+    document.getElementById('timer-btn').addEventListener('click', handleUserCheck)
+}
+
+
+let startStudySession = async () => {
+    let timerBtn = document.getElementById('timer-btn')
+    timerBtn.style.backgroundColor = '#42855B'
+    timerBtn.style.cursor = "default"
+    document.getElementById('timer-btn').removeEventListener('click', handleUserCheck)
+    let timer = document.getElementById("timer")
+    let micBtn = document.getElementById('mic-btn')
+    micBtn.removeEventListener('click', toggleMicrophone)
+    micBtn.style.cursor = "default"
+    if (!localTracks[0].muted) {
+        toggleMicrophone()
+    }
+    startTimer(studySessionLength, timer, "Study", revertSessionChanges)
+}
+
 let checkForSession = async () => {
     let response = fetch(`/can_session_start/?room_name=${CHANNEL}`)
     let canSessionStart = await (await response).json()
     console.log(canSessionStart.can_session_start)
     if (canSessionStart.can_session_start) {
         clearInterval(sessionInterval)
-        
-        let timerBtn = document.getElementById('timer-btn')
-        timerBtn.style.backgroundColor = '#42855B'
-        timerBtn.style.cursor = "default"
-        startTimer(10, document.getElementById('timer'))
-        document.getElementById('timer-btn').removeEventListener('click', handleUserCheck)
+        startStudySession()
     }
 }
+
+
 
 
 
